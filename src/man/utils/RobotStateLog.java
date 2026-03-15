@@ -4,7 +4,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class RobotStateLog {
 
     private static final int MAX_SIZE = 300;
@@ -15,9 +14,11 @@ public class RobotStateLog {
         this.states = new ArrayList<>();
     }
 
+    // Add / Delete
 
     public void addState(RobotState state) {
         states.add(state);
+        //cut if too big
         if (states.size() > MAX_SIZE) {
             states.remove(0);
         }
@@ -27,7 +28,7 @@ public class RobotStateLog {
         states.clear();
     }
 
-
+    // Access
     public int size() {
         return states.size();
     }
@@ -36,15 +37,18 @@ public class RobotStateLog {
         return states.isEmpty();
     }
 
+    // Most recent state
     public RobotState latest() {
         if (states.isEmpty()) return null;
         return states.get(states.size() - 1);
     }
 
+    //oldest state
     public RobotState get(int index) {
         return states.get(index);
     }
 
+    //state after tick(exact time)
     public RobotState getAtTime(long time) {
         for (int i = states.size() - 1; i >= 0; i--) {
             if (states.get(i).time == time) {
@@ -54,6 +58,7 @@ public class RobotStateLog {
         return null;
     }
 
+    //closest state from a given tick
     public RobotState getClosestToTime(long time) {
         if (states.isEmpty()) return null;
         RobotState best = states.get(0);
@@ -72,7 +77,9 @@ public class RobotStateLog {
         return new ArrayList<>(states);
     }
 
+    // Utility for MovementPredictor
 
+    //return the state with N ticks behind from the last state
     public RobotState getNTicksAgo(int n) {
         if (states.isEmpty()) return null;
         RobotState latest = latest();
@@ -80,14 +87,16 @@ public class RobotStateLog {
         return getClosestToTime(targetTime);
     }
 
+    //distance made in the last N ticks
     public double distanceTraveledInLastNTicks(int n) {
         if (states.size() < 2) return 0;
         RobotState recent = latest();
-        RobotState old    = getNTicksAgo(n);
+        RobotState old = getNTicksAgo(n);
         if (old == null) return 0;
         return recent.distanceTo(old);
     }
 
+    //avg speed in the last N ticks
     public double averageVelocityInLastNTicks(int n) {
         int count = 0;
         double sum = 0;

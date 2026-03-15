@@ -5,27 +5,27 @@ import java.awt.geom.Point2D;
 public class RobotState {
 
     public final Point2D.Double location;
-    public final double heading;    // radiani
-    public final double velocity;   // -8.0 .. 8.0
-    public final long time;         // tick-ul
+    public final double heading; // radians
+    public final double velocity;
+    public final long time;
 
     private RobotState(Builder b) {
         this.location = b.location;
-        this.heading  = b.heading;
+        this.heading = b.heading;
         this.velocity = b.velocity;
-        this.time     = b.time;
+        this.time = b.time;
     }
 
-
+    // Builder
     public static Builder newBuilder() {
         return new Builder();
     }
 
     public static class Builder {
         private Point2D.Double location = new Point2D.Double(0, 0);
-        private double heading  = 0;
+        private double heading = 0;
         private double velocity = 0;
-        private long   time     = 0;
+        private long time = 0;
 
         public Builder setLocation(Point2D.Double location) {
             this.location = location;
@@ -57,14 +57,17 @@ public class RobotState {
         }
     }
 
+    // Utility Methods
 
     public double getX() { return location.x; }
     public double getY() { return location.y; }
 
+    //Distance to another point
     public double distanceTo(Point2D.Double other) {
         return location.distance(other);
     }
 
+    //Distance to another state
     public double distanceTo(RobotState other) {
         return location.distance(other.location);
     }

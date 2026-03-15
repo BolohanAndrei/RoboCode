@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-
 public class AStarNavigator {
 
     private static final int GRID_COLS = 20;
@@ -17,21 +16,23 @@ public class AStarNavigator {
     private static final double MAX_ROBOT_VELOCITY = 8.0;
 
     private final BattleField battleField;
-    private final double      cellWidth;
-    private final double      cellHeight;
+    private final double cellWidth;
+    private final double cellHeight;
 
     private double[][] dangerMap;
+
+    // Node intern A*
     private static class Node implements Comparable<Node> {
         int col, row;
         double gCost;
         double hCost;
-        Node   parent;
+        Node parent;
 
         Node(int col, int row, double gCost, double hCost, Node parent) {
-            this.col    = col;
-            this.row    = row;
-            this.gCost  = gCost;
-            this.hCost  = hCost;
+            this.col = col;
+            this.row = row;
+            this.gCost = gCost;
+            this.hCost = hCost;
             this.parent = parent;
         }
 
@@ -55,15 +56,15 @@ public class AStarNavigator {
         }
     }
 
-
+    // Constructor
     public AStarNavigator(BattleField battleField) {
         this.battleField = battleField;
-        this.cellWidth   = battleField.width  / GRID_COLS;
-        this.cellHeight  = battleField.height / GRID_ROWS;
-        this.dangerMap   = new double[GRID_COLS][GRID_ROWS];
+        this.cellWidth=battleField.width  / GRID_COLS;
+        this.cellHeight = battleField.height / GRID_ROWS;
+        this.dangerMap =new double[GRID_COLS][GRID_ROWS];
     }
 
-
+    // Danger map
     public void clearDangerMap() {
         for (int c = 0; c < GRID_COLS; c++) {
             for (int r = 0; r < GRID_ROWS; r++) {
@@ -73,21 +74,21 @@ public class AStarNavigator {
     }
 
     public void markWaveDanger(Wave wave, long currentTime) {
-        Point2D.Double origin    = wave.fireLocation;
-        double         waveAngle = wave.absoluteBearingAtFire;
-        double         mea       = wave.maxEscapeAngle;
+        Point2D.Double origin = wave.fireLocation;
+        double waveAngle = wave.absoluteBearingAtFire;
+        double mea = wave.maxEscapeAngle;
 
         for (int c = 0; c < GRID_COLS; c++) {
             for (int r = 0; r < GRID_ROWS; r++) {
                 Point2D.Double cellCenter = cellToWorld(c, r);
                 double bearing = MathUtils.absoluteBearing(origin, cellCenter);
-                double offset  = MathUtils.normalRelativeAngle(bearing - waveAngle);
+                double offset = MathUtils.normalRelativeAngle(bearing - waveAngle);
 
                 double normalizedOffset = mea == 0 ? 0 : Math.abs(offset) / mea;
 
                 if (normalizedOffset <= 1.0) {
                     double danger = 1.0 - normalizedOffset;
-                    double dist   = origin.distance(cellCenter);
+                    double dist=origin.distance(cellCenter);
                     danger *= (1.0 / (1.0 + dist * 0.001));
                     dangerMap[c][r] += danger;
                 }
@@ -98,8 +99,8 @@ public class AStarNavigator {
     public void markWallDanger() {
         for (int c = 0; c < GRID_COLS; c++) {
             for (int r = 0; r < GRID_ROWS; r++) {
-                Point2D.Double center  = cellToWorld(c, r);
-                double         wallDist = battleField.distanceToWall(center);
+                Point2D.Double center = cellToWorld(c, r);
+                double wallDist = battleField.distanceToWall(center);
                 if (wallDist < 80) {
                     dangerMap[c][r] += (80 - wallDist) / 80.0 * 2.0;
                 }
@@ -107,21 +108,21 @@ public class AStarNavigator {
         }
     }
 
-
     public Point2D.Double findSafestDestination(Point2D.Double myPosition,
                                                 Wave closestWave,
                                                 long currentTime) {
-
+        // compute maximum distance we can do before wave touches us
         double maxReachDist = Double.POSITIVE_INFINITY;
 
         if (closestWave != null) {
-            double distToWave   = closestWave.fireLocation.distance(myPosition)
+            double distToWave = closestWave.fireLocation.distance(myPosition)
                     - closestWave.radius(currentTime);
             double timeToImpact = Math.max(1, distToWave / closestWave.bulletSpeed);
             maxReachDist = timeToImpact * MAX_ROBOT_VELOCITY;
         }
 
-        int    goalCol   = 0, goalRow = 0;
+        // find min cell within reach
+        int goalCol= 0, goalRow = 0;
         double minDanger = Double.POSITIVE_INFINITY;
 
         for (int c = 0; c < GRID_COLS; c++) {
@@ -129,41 +130,40 @@ public class AStarNavigator {
                 Point2D.Double cellCenter = cellToWorld(c, r);
                 double distToCell = myPosition.distance(cellCenter);
 
+                //  ignore out of reach cells
                 if (distToCell > maxReachDist) continue;
 
                 if (dangerMap[c][r] < minDanger) {
                     minDanger = dangerMap[c][r];
-                    goalCol   = c;
-                    goalRow   = r;
+                    goalCol = c;
+                    goalRow = r;
                 }
             }
         }
-
         return runAStar(myPosition, goalCol, goalRow);
     }
-
 
     public Point2D.Double findSafestDestination(Point2D.Double myPosition) {
         return findSafestDestination(myPosition, null, 0);
     }
 
-
+    // A* principal
     public Point2D.Double runAStar(Point2D.Double myPosition,
                                    int goalCol, int goalRow) {
         int[] startCell = worldToCell(myPosition);
-        int startCol    = startCell[0];
-        int startRow    = startCell[1];
+        int startCol = startCell[0];
+        int startRow = startCell[1];
 
         if (startCol == goalCol && startRow == goalRow) {
             return cellToWorld(goalCol, goalRow);
         }
 
-        PriorityQueue<Node>  openSet  = new PriorityQueue<>();
-        Map<Integer, Node>   cameFrom = new HashMap<>();
-        Map<Integer, Double> gScore   = new HashMap<>();
+        PriorityQueue<Node> openSet = new PriorityQueue<>();
+        Map<Integer, Node> cameFrom = new HashMap<>();
+        Map<Integer, Double> gScore = new HashMap<>();
 
         int startKey = key(startCol, startRow);
-        int goalKey  = key(goalCol,  goalRow);
+        int goalKey = key(goalCol, goalRow);
 
         Node startNode = new Node(startCol, startRow, 0,
                 heuristic(startCol, startRow, goalCol, goalRow), null);
@@ -172,7 +172,7 @@ public class AStarNavigator {
 
         while (!openSet.isEmpty()) {
             Node current = openSet.poll();
-            int  currKey = key(current.col, current.row);
+            int currKey = key(current.col, current.row);
 
             if (currKey == goalKey) {
                 return firstStepInPath(current, startCol, startRow, myPosition);
@@ -183,17 +183,16 @@ public class AStarNavigator {
                 int nr = neighbor[1];
                 int nk = key(nc, nr);
 
-                double moveCost   = MathUtils.distance(
+                double moveCost = MathUtils.distance(
                         cellToWorld(current.col, current.row),
                         cellToWorld(nc, nr));
-                double danger     = dangerMap[nc][nr];
+                double danger = dangerMap[nc][nr];
                 double tentativeG = gScore.getOrDefault(currKey, Double.MAX_VALUE)
                         + moveCost + danger * 50.0;
 
                 if (tentativeG < gScore.getOrDefault(nk, Double.MAX_VALUE)) {
                     gScore.put(nk, tentativeG);
-                    Node neighborNode = new Node(nc, nr, tentativeG,
-                            heuristic(nc, nr, goalCol, goalRow), current);
+                    Node neighborNode = new Node(nc, nr, tentativeG, heuristic(nc, nr, goalCol, goalRow), current);
                     openSet.add(neighborNode);
                     cameFrom.put(nk, current);
                 }
@@ -203,12 +202,12 @@ public class AStarNavigator {
         return cellToWorld(goalCol, goalRow);
     }
 
-
+    // Utility A*
     private Point2D.Double firstStepInPath(Node goalNode,
                                            int startCol, int startRow,
                                            Point2D.Double myPosition) {
-        List<Node> path    = new ArrayList<>();
-        Node       current = goalNode;
+        List<Node> path = new ArrayList<>();
+        Node current = goalNode;
         while (current != null) {
             path.add(current);
             current = current.parent;
@@ -240,7 +239,7 @@ public class AStarNavigator {
         return neighbors;
     }
 
-
+    // world to cell
     public int[] worldToCell(Point2D.Double point) {
         int col = (int) MathUtils.clamp(point.x / cellWidth,  0, GRID_COLS - 1);
         int row = (int) MathUtils.clamp(point.y / cellHeight, 0, GRID_ROWS - 1);
@@ -255,8 +254,8 @@ public class AStarNavigator {
 
     private int key(int col, int row) { return col * GRID_ROWS + row; }
 
-
+    // Getters
     public double[][] getDangerMap() { return dangerMap; }
-    public int getGridCols()         { return GRID_COLS; }
-    public int getGridRows()         { return GRID_ROWS; }
+    public int getGridCols() { return GRID_COLS; }
+    public int getGridRows() { return GRID_ROWS; }
 }

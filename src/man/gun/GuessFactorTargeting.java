@@ -7,11 +7,10 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class GuessFactorTargeting {
 
-    private static final int    GF_BINS           = 31;
-    private static final int    MIN_DATA_FOR_GF   = 5;
+    private static final int GF_BINS = 31;
+    private static final int MIN_DATA_FOR_GF = 5;
     private static final double MAX_FIRE_DISTANCE = 800.0;
 
     private final AdvancedRobot robot;
@@ -20,20 +19,21 @@ public class GuessFactorTargeting {
 
     private int dataCount;
 
+    // Constructor
     public GuessFactorTargeting(AdvancedRobot robot) {
-        this.robot       = robot;
+        this.robot = robot;
         this.activeWaves = new ArrayList<>();
-        this.dataCount   = 0;
+        this.dataCount = 0;
     }
 
-
+    // Aim
     public void aim(Point2D.Double myPosition,
                     EnemyData enemy,
                     double bulletPower) {
 
         if (enemy == null) return;
 
-        double         gunHeading = robot.getGunHeadingRadians();
+        double gunHeading = robot.getGunHeadingRadians();
         Point2D.Double targetPos;
 
         if (dataCount >= MIN_DATA_FOR_GF) {
@@ -43,11 +43,11 @@ public class GuessFactorTargeting {
         }
 
         double aimAngle = MathUtils.absoluteBearing(myPosition, targetPos);
-        double gunTurn  = MathUtils.normalRelativeAngle(aimAngle - gunHeading);
+        double gunTurn = MathUtils.normalRelativeAngle(aimAngle - gunHeading);
         robot.setTurnGunRightRadians(gunTurn);
     }
 
-
+    // Fire
     public void fire(Point2D.Double myPosition,
                      EnemyData enemy,
                      double bulletPower) {
@@ -56,11 +56,10 @@ public class GuessFactorTargeting {
         if (robot.getGunHeat() > 0) return;
         if (enemy.distance > MAX_FIRE_DISTANCE) return;
 
-        double gunHeading   = robot.getGunHeadingRadians();
+        double gunHeading= robot.getGunHeadingRadians();
         double enemyBearing = MathUtils.absoluteBearing(myPosition, enemy.getLocation());
-        double gunError     = Math.abs(MathUtils.normalRelativeAngle(
-                gunHeading - enemyBearing));
-        double tolerance    = Math.atan2(18.0, enemy.distance);
+        double gunError= Math.abs(MathUtils.normalRelativeAngle(gunHeading - enemyBearing));
+        double tolerance = Math.atan2(18.0, enemy.distance);
 
         if (gunError <= tolerance) {
             Wave wave = createWave(myPosition, enemy, bulletPower, robot.getTime());
@@ -69,7 +68,7 @@ public class GuessFactorTargeting {
         }
     }
 
-
+    // onBulletHit
     public void onBulletHit(Point2D.Double enemyPosition,
                             EnemyData enemy) {
         if (activeWaves.isEmpty() || enemy == null) return;
@@ -101,20 +100,20 @@ public class GuessFactorTargeting {
         }
     }
 
-
+    //GuessFactor
     private Point2D.Double predictPositionGF(Point2D.Double myPosition,
                                              EnemyData enemy,
                                              double bulletPower) {
-        int    bestBin        = enemy.bestGuessFactorBin();
-        double gf             = enemy.binToGuessFactor(bestBin);
+        int bestBin = enemy.bestGuessFactorBin();
+        double gf = enemy.binToGuessFactor(bestBin);
         double absoluteBearing = MathUtils.absoluteBearing(myPosition, enemy.getLocation());
-        double mea            = MaxEscapeAngle.calculate(bulletPower);
-        double aimOffset      = gf * mea * enemy.lateralSign;
-        double aimAngle       = absoluteBearing + aimOffset;
+        double mea= MaxEscapeAngle.calculate(bulletPower);
+        double aimOffset= gf * mea * enemy.lateralSign;
+        double aimAngle = absoluteBearing + aimOffset;
         return MathUtils.project(myPosition, aimAngle, enemy.distance);
     }
 
-
+    //Liniar Prediction (fallback)
     private Point2D.Double predictPositionLinear(Point2D.Double myPosition,
                                                  EnemyData enemy,
                                                  double bulletPower) {
@@ -136,7 +135,7 @@ public class GuessFactorTargeting {
         return predictedPos;
     }
 
-
+    // Create own wave
     private Wave createWave(Point2D.Double myPosition,
                             EnemyData enemy,
                             double bulletPower,
@@ -153,7 +152,7 @@ public class GuessFactorTargeting {
         );
     }
 
-
+    // Reset
     public void init() {
         activeWaves.clear();
     }
@@ -162,7 +161,6 @@ public class GuessFactorTargeting {
         activeWaves.clear();
         dataCount = 0;
     }
-
 
     public int getDataCount() { return dataCount; }
 
