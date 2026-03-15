@@ -2,10 +2,6 @@ package man.utils;
 
 import java.awt.geom.Point2D;
 
-/**
- * Snapshot imutabil al stării unui robot la un anumit tick.
- * Folosit de RobotStateLog, MovementPredictor și Wave Surfing.
- */
 public class RobotState {
 
     public final Point2D.Double location;
@@ -20,9 +16,6 @@ public class RobotState {
         this.time     = b.time;
     }
 
-    // -------------------------------------------------------
-    // Builder
-    // -------------------------------------------------------
 
     public static Builder newBuilder() {
         return new Builder();
@@ -64,19 +57,14 @@ public class RobotState {
         }
     }
 
-    // -------------------------------------------------------
-    // Metode utilitare
-    // -------------------------------------------------------
 
     public double getX() { return location.x; }
     public double getY() { return location.y; }
 
-    // Distanța față de un alt punct
     public double distanceTo(Point2D.Double other) {
         return location.distance(other);
     }
 
-    // Distanța față de altă stare
     public double distanceTo(RobotState other) {
         return location.distance(other.location);
     }

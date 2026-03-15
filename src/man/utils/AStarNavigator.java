@@ -8,14 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-/**
- * A* Navigator.
- *
- * FIX #3: findSafestDestination limitează căutarea la celule
- *         accesibile în timpul de zbor al valului cel mai apropiat.
- *         Un robot la 800px distanță nu e o destinație utilă dacă
- *         valul ajunge în 10 ticks.
- */
+
 public class AStarNavigator {
 
     private static final int GRID_COLS = 20;
@@ -28,10 +21,6 @@ public class AStarNavigator {
     private final double      cellHeight;
 
     private double[][] dangerMap;
-
-    // -------------------------------------------------------
-    // Nod intern A*
-    // -------------------------------------------------------
     private static class Node implements Comparable<Node> {
         int col, row;
         double gCost;
@@ -66,9 +55,7 @@ public class AStarNavigator {
         }
     }
 
-    // -------------------------------------------------------
-    // Constructor
-    // -------------------------------------------------------
+
     public AStarNavigator(BattleField battleField) {
         this.battleField = battleField;
         this.cellWidth   = battleField.width  / GRID_COLS;
@@ -76,9 +63,7 @@ public class AStarNavigator {
         this.dangerMap   = new double[GRID_COLS][GRID_ROWS];
     }
 
-    // -------------------------------------------------------
-    // Harta de pericol
-    // -------------------------------------------------------
+
     public void clearDangerMap() {
         for (int c = 0; c < GRID_COLS; c++) {
             for (int r = 0; r < GRID_ROWS; r++) {
@@ -122,33 +107,20 @@ public class AStarNavigator {
         }
     }
 
-    // -------------------------------------------------------
-    // A* — FIX #3: destinație limitată la raza accesibilă
-    // -------------------------------------------------------
 
-    /**
-     * Găsește cel mai sigur punct accesibil înainte ca valul să ajungă.
-     *
-     * @param myPosition   poziția curentă
-     * @param closestWave  valul cel mai apropiat (pentru a calcula timpul)
-     * @param currentTime  tick-ul curent
-     */
     public Point2D.Double findSafestDestination(Point2D.Double myPosition,
                                                 Wave closestWave,
                                                 long currentTime) {
-        // Calculăm distanța maximă pe care o putem parcurge
-        // înainte ca valul să ne atingă
+
         double maxReachDist = Double.POSITIVE_INFINITY;
 
         if (closestWave != null) {
             double distToWave   = closestWave.fireLocation.distance(myPosition)
                     - closestWave.radius(currentTime);
             double timeToImpact = Math.max(1, distToWave / closestWave.bulletSpeed);
-            // Robot max 8px/tick, dar realist ~6px/tick cu accelerație
             maxReachDist = timeToImpact * MAX_ROBOT_VELOCITY;
         }
 
-        // Găsim celula cu pericolul minim în raza accesibilă
         int    goalCol   = 0, goalRow = 0;
         double minDanger = Double.POSITIVE_INFINITY;
 
@@ -157,7 +129,6 @@ public class AStarNavigator {
                 Point2D.Double cellCenter = cellToWorld(c, r);
                 double distToCell = myPosition.distance(cellCenter);
 
-                // FIX #3: ignorăm celulele inaccesibile în timp util
                 if (distToCell > maxReachDist) continue;
 
                 if (dangerMap[c][r] < minDanger) {
@@ -171,16 +142,12 @@ public class AStarNavigator {
         return runAStar(myPosition, goalCol, goalRow);
     }
 
-    /**
-     * Versiunea fără val — pentru compatibilitate când nu există valuri active.
-     */
+
     public Point2D.Double findSafestDestination(Point2D.Double myPosition) {
         return findSafestDestination(myPosition, null, 0);
     }
 
-    // -------------------------------------------------------
-    // A* principal
-    // -------------------------------------------------------
+
     public Point2D.Double runAStar(Point2D.Double myPosition,
                                    int goalCol, int goalRow) {
         int[] startCell = worldToCell(myPosition);
@@ -236,9 +203,7 @@ public class AStarNavigator {
         return cellToWorld(goalCol, goalRow);
     }
 
-    // -------------------------------------------------------
-    // Utilitare A*
-    // -------------------------------------------------------
+
     private Point2D.Double firstStepInPath(Node goalNode,
                                            int startCol, int startRow,
                                            Point2D.Double myPosition) {
@@ -275,9 +240,7 @@ public class AStarNavigator {
         return neighbors;
     }
 
-    // -------------------------------------------------------
-    // Conversii grilă <-> lume
-    // -------------------------------------------------------
+
     public int[] worldToCell(Point2D.Double point) {
         int col = (int) MathUtils.clamp(point.x / cellWidth,  0, GRID_COLS - 1);
         int row = (int) MathUtils.clamp(point.y / cellHeight, 0, GRID_ROWS - 1);
@@ -292,9 +255,7 @@ public class AStarNavigator {
 
     private int key(int col, int row) { return col * GRID_ROWS + row; }
 
-    // -------------------------------------------------------
-    // Getteri
-    // -------------------------------------------------------
+
     public double[][] getDangerMap() { return dangerMap; }
     public int getGridCols()         { return GRID_COLS; }
     public int getGridRows()         { return GRID_ROWS; }
