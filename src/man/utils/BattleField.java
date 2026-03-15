@@ -9,7 +9,6 @@ public class BattleField {
     public final double height;
     private final Rectangle2D.Double rect;
 
-    // Margine de siguranță față de pereți
     private static final double MARGIN = 18.0;
 
     public BattleField(double width, double height) {
@@ -18,12 +17,10 @@ public class BattleField {
         this.rect = new Rectangle2D.Double(0, 0, width, height);
     }
 
-    // Verifică dacă un punct e în interiorul arenei (fără margine)
     public boolean contains(Point2D.Double point) {
         return rect.contains(point);
     }
 
-    // Verifică dacă un punct e în interiorul arenei cu margine de siguranță
     public boolean containsSafe(Point2D.Double point) {
         return point.x >= MARGIN
                 && point.x <= width - MARGIN
@@ -31,14 +28,12 @@ public class BattleField {
                 && point.y <= height - MARGIN;
     }
 
-    // Clampează un punct în interiorul arenei sigure
     public Point2D.Double clamp(Point2D.Double point) {
         double x = Math.max(MARGIN, Math.min(width - MARGIN, point.x));
         double y = Math.max(MARGIN, Math.min(height - MARGIN, point.y));
         return new Point2D.Double(x, y);
     }
 
-    // Distanța de la un punct la cel mai apropiat perete
     public double distanceToWall(Point2D.Double point) {
         double distLeft   = point.x;
         double distRight  = width - point.x;
@@ -48,17 +43,14 @@ public class BattleField {
                 Math.min(distBottom, distTop));
     }
 
-    // Distanța normalizată la perete (0 = pe perete, 1 = centrul arenei)
     public double normalizedWallDistance(Point2D.Double point) {
         return distanceToWall(point) / (Math.min(width, height) / 2.0);
     }
 
-    // Centrul arenei
     public Point2D.Double getCenter() {
         return new Point2D.Double(width / 2.0, height / 2.0);
     }
 
-    // Returneaza dreptunghiul arenei
     public Rectangle2D.Double getRect() {
         return rect;
     }
