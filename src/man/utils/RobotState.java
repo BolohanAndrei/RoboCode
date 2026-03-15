@@ -1,0 +1,80 @@
+package man.utils;
+
+import java.awt.geom.Point2D;
+
+public class RobotState {
+
+    public final Point2D.Double location;
+    public final double heading; // radians
+    public final double velocity;
+    public final long time;
+
+    private RobotState(Builder b) {
+        this.location = b.location;
+        this.heading = b.heading;
+        this.velocity = b.velocity;
+        this.time = b.time;
+    }
+
+    // Builder
+    public static Builder newBuilder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private Point2D.Double location = new Point2D.Double(0, 0);
+        private double heading = 0;
+        private double velocity = 0;
+        private long time = 0;
+
+        public Builder setLocation(Point2D.Double location) {
+            this.location = location;
+            return this;
+        }
+
+        public Builder setLocation(double x, double y) {
+            this.location = new Point2D.Double(x, y);
+            return this;
+        }
+
+        public Builder setHeading(double heading) {
+            this.heading = heading;
+            return this;
+        }
+
+        public Builder setVelocity(double velocity) {
+            this.velocity = velocity;
+            return this;
+        }
+
+        public Builder setTime(long time) {
+            this.time = time;
+            return this;
+        }
+
+        public RobotState build() {
+            return new RobotState(this);
+        }
+    }
+
+    // Utility Methods
+
+    public double getX() { return location.x; }
+    public double getY() { return location.y; }
+
+    //Distance to another point
+    public double distanceTo(Point2D.Double other) {
+        return location.distance(other);
+    }
+
+    //Distance to another state
+    public double distanceTo(RobotState other) {
+        return location.distance(other.location);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("RobotState[t=%d, (%.1f,%.1f), h=%.3f, v=%.2f]",
+                time, location.x, location.y, heading, velocity);
+    }
+}
